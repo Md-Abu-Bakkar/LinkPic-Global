@@ -1,329 +1,146 @@
-class LinkPicApp {
-    constructor() {
-        this.initElements();
-        this.initEventListeners();
-        this.initLocalStorageCleanup();
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM elements
+    const imageUpload = document.getElementById('imageUpload');
+    const uploadBox = document.getElementById('uploadBox');
+    const imagePreview = document.getElementById('imagePreview');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const linkForm = document.getElementById('linkForm');
+    const resultArea = document.getElementById('resultArea');
+    const generatedLink = document.getElementById('generatedLink');
+    const copyBtn = document.getElementById('copyBtn');
+    const testLink = document.getElementById('testLink');
+    const notification = document.getElementById('notification');
 
-    initElements() {
-        // Upload elements
-        this.uploadBox = document.getElementById('uploadBox');
-        this.imageUpload = document.getElementById('imageUpload');
-        this.imagePreview = document.getElementById('imagePreview');
-        this.loadingOverlay = document.getElementById('loadingOverlay');
-        this.fileName = document.getElementById('fileName');
-        this.fileSize = document.getElementById('fileSize');
-        this.qualityRange = document.getElementById('qualityRange');
-        this.qualityValue = document.getElementById('qualityValue');
-        
-        // Form elements
-        this.linkForm = document.getElementById('linkForm');
-        this.destinationUrl = document.getElementById('destinationUrl');
-        this.imageCaption = document.getElementById('imageCaption');
-        this.charCount = document.getElementById('charCount');
-        this.resetBtn = document.getElementById('resetBtn');
-        this.generateBtn = document.getElementById('generateBtn');
-        
-        // Result elements
-        this.resultCard = document.getElementById('resultCard');
-        this.resultPreview = document.getElementById('resultPreview');
-        this.generatedLink = document.getElementById('generatedLink');
-        this.copyBtn = document.getElementById('copyBtn');
-        this.testLink = document.getElementById('testLink');
-        this.shareBtn = document.getElementById('shareBtn');
-        this.createdDate = document.getElementById('createdDate');
-        
-        // Notification
-        this.notification = document.getElementById('notification');
-        
-        // State
-        this.uploadedImage = null;
-        this.currentLinkId = null;
-    }
+    let uploadedImage = null;
 
-    initEventListeners() {
-        // File upload handling
-        this.imageUpload.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
-        
-        // Drag and drop
-        this.uploadBox.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            this.uploadBox.classList.add('dragover');
-        });
-        
-        this.uploadBox.addEventListener('dragleave', () => {
-            this.uploadBox.classList.remove('dragover');
-        });
-        
-        this.uploadBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            this.uploadBox.classList.remove('dragover');
-            if (e.dataTransfer.files.length) {
-                this.handleFileSelect(e.dataTransfer.files[0]);
-            }
-        });
-        
-        // Click to upload
-        this.uploadBox.addEventListener('click', () => this.imageUpload.click());
-        
-        // Quality control
-        this.qualityRange.addEventListener('input', () => {
-            this.qualityValue.textContent = `${this.qualityRange.value}%`;
-        });
-        
-        // Caption character count
-        this.imageCaption.addEventListener('input', () => {
-            const count = this.imageCaption.value.length;
-            this.charCount.textContent = count;
-            if (count > 200) {
-                this.charCount.style.color = '#ff4444';
-            } else {
-                this.charCount.style.color = '#666';
-            }
-        });
-        
-        // Form submission
-        this.linkForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
-        
-        // Reset form
-        this.resetBtn.addEventListener('click', () => this.resetForm());
-        
-        // Copy link
-        this.copyBtn.addEventListener('click', () => this.copyToClipboard());
-        
-        // Share link
-        this.shareBtn.addEventListener('click', () => this.shareLink());
-    }
+    // Handle image upload
+    imageUpload.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (file.type.match('image.*')) {
+                loadingOverlay.classList.remove('hidden');
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Process image to ensure reasonable size
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Set maximum dimensions
+                        const MAX_WIDTH = 1200;
+                        const MAX_HEIGHT = 1200;
+                        let width = img.width;
+                        let height = img.height;
 
-    handleFileSelect(file) {
-        if (!file || !file.type.match('image.*')) {
-            this.showNotification('Please select a valid image file', 'error');
-            return;
-        }
-        
-        // Show file info
-        this.fileName.textContent = file.name;
-        this.fileSize.textContent = this.formatFileSize(file.size);
-        document.querySelector('.file-info').classList.remove('hidden');
-        
-        // Show loading state
-        this.loadingOverlay.classList.remove('hidden');
-        document.querySelector('.placeholder-graphic').classList.add('hidden');
-        
-        const reader = new FileReader();
-        reader.onload = (e) => this.processImage(e.target.result);
-        reader.readAsDataURL(file);
-    }
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
 
-    processImage(imageData) {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Set maximum dimensions
-            const MAX_WIDTH = 1600;
-            const MAX_HEIGHT = 1600;
-            
-            let { width, height } = this.calculateDimensions(img.width, img.height, MAX_WIDTH, MAX_HEIGHT);
-            
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Get quality from slider (convert from 0-100 to 0.5-1.0)
-            const quality = this.qualityRange.value / 100;
-            
-            // Convert to JPEG with specified quality
-            this.uploadedImage = canvas.toDataURL('image/jpeg', quality);
-            this.imagePreview.src = this.uploadedImage;
-            this.imagePreview.classList.remove('hidden');
-            this.loadingOverlay.classList.add('hidden');
-            
-            this.showNotification('Image optimized and ready!', 'success');
-        };
-        img.onerror = () => {
-            this.loadingOverlay.classList.add('hidden');
-            this.showNotification('Failed to process image', 'error');
-        };
-        img.src = imageData;
-    }
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
 
-    calculateDimensions(originalWidth, originalHeight, maxWidth, maxHeight) {
-        let width = originalWidth;
-        let height = originalHeight;
-        
-        if (width > height) {
-            if (width > maxWidth) {
-                height *= maxWidth / width;
-                width = maxWidth;
-            }
-        } else {
-            if (height > maxHeight) {
-                width *= maxHeight / height;
-                height = maxHeight;
+                        // Convert to JPEG with 80% quality
+                        uploadedImage = canvas.toDataURL('image/jpeg', 0.8);
+                        imagePreview.src = uploadedImage;
+                        imagePreview.classList.remove('hidden');
+                        loadingOverlay.classList.add('hidden');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         }
-        
-        return { width: Math.round(width), height: Math.round(height) };
-    }
+    });
 
-    handleFormSubmit(e) {
+    // Allow clicking on the upload area
+    uploadBox.addEventListener('click', function() {
+        imageUpload.click();
+    });
+
+    // Handle form submission
+    linkForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        if (!this.uploadedImage) {
-            this.showNotification('Please upload an image first', 'error');
+        if (!uploadedImage) {
+            showNotification('Please upload an image first', 'error');
             return;
         }
-        
-        if (!this.destinationUrl.checkValidity()) {
-            this.showNotification('Please enter a valid destination URL', 'error');
+
+        const destinationUrl = document.getElementById('destinationUrl').value;
+        if (!destinationUrl) {
+            showNotification('Please enter a destination URL', 'error');
             return;
         }
-        
-        // Disable button during processing
-        this.generateBtn.disabled = true;
-        this.generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+        const imageCaption = document.getElementById('imageCaption').value;
         
         // Generate unique ID for the link
-        this.currentLinkId = this.generateId(12);
+        const linkId = generateShortId();
         
-        // Prepare link data
+        // Create data object to store
         const linkData = {
-            image: this.uploadedImage,
-            url: this.destinationUrl.value,
-            caption: this.imageCaption.value,
-            timestamp: new Date().getTime(),
-            stats: {
-                views: 0,
-                clicks: 0
-            }
+            image: uploadedImage,
+            url: destinationUrl,
+            caption: imageCaption,
+            timestamp: new Date().getTime()
         };
-        
-        // Store data in localStorage
-        localStorage.setItem(`linkpic_${this.currentLinkId}`, JSON.stringify(linkData));
-        
-        // Create the shareable link
-        const baseUrl = window.location.href.replace('index.html', '');
-        const link = `${baseUrl}redirect.html?id=${this.currentLinkId}`;
-        
-        // Update UI with results
-        this.generatedLink.value = link;
-        this.testLink.href = link;
-        this.resultPreview.src = this.uploadedImage;
-        this.createdDate.textContent = new Date().toLocaleDateString();
-        
-        // Show result card
-        this.resultCard.classList.remove('hidden');
-        
-        // Scroll to result
-        setTimeout(() => {
-            this.resultCard.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-        
-        // Reset button state
-        this.generateBtn.disabled = false;
-        this.generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Link';
-        
-        this.showNotification('Link created successfully!', 'success');
-    }
 
-    resetForm() {
-        this.linkForm.reset();
-        this.imagePreview.src = '';
-        this.imagePreview.classList.add('hidden');
-        this.uploadedImage = null;
-        this.currentLinkId = null;
-        this.resultCard.classList.add('hidden');
-        document.querySelector('.placeholder-graphic').classList.remove('hidden');
-        document.querySelector('.file-info').classList.add('hidden');
-        this.charCount.textContent = '0';
-        this.charCount.style.color = '#666';
-        this.qualityRange.value = 85;
-        this.qualityValue.textContent = '85%';
-    }
+        // Store in localStorage
+        localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
+        
+        // Create the short link
+        const baseUrl = window.location.href.split('?')[0].replace('index.html', '');
+        const shortLink = `${baseUrl}view.html?id=${linkId}`;
+        
+        // Display the result
+        generatedLink.value = shortLink;
+        testLink.href = shortLink;
+        resultArea.classList.remove('hidden');
+        
+        // Show success message
+        showNotification('Link generated successfully!', 'success');
+    });
 
-    copyToClipboard() {
-        this.generatedLink.select();
+    // Copy link to clipboard
+    copyBtn.addEventListener('click', function() {
+        generatedLink.select();
         document.execCommand('copy');
         
         // Visual feedback
-        const originalText = this.copyBtn.innerHTML;
-        this.copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-        this.copyBtn.classList.add('copied');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copied');
         
-        this.showNotification('Link copied to clipboard!', 'success');
+        showNotification('Link copied to clipboard', 'success');
         
-        setTimeout(() => {
-            this.copyBtn.innerHTML = originalText;
-            this.copyBtn.classList.remove('copied');
+        setTimeout(function() {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove('copied');
         }, 2000);
+    });
+
+    // Generate short ID (6 characters)
+    function generateShortId() {
+        return Math.random().toString(36).substring(2, 8);
     }
 
-    shareLink() {
-        if (navigator.share) {
-            navigator.share({
-                title: 'Check out this image',
-                text: 'I created this link with LinkPicGlobal',
-                url: this.generatedLink.value
-            }).catch(err => {
-                this.showNotification('Error sharing: ' + err, 'error');
-            });
-        } else {
-            // Fallback for browsers without Web Share API
-            this.copyToClipboard();
-            this.showNotification('Link copied - paste it anywhere to share', 'info');
-        }
-    }
-
-    generateId(length) {
-        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = '';
-        
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        
-        return result;
-    }
-
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    showNotification(message, type) {
-        this.notification.textContent = message;
-        this.notification.className = `notification show ${type}`;
-        
+    // Show notification
+    function showNotification(message, type) {
+        notification.textContent = message;
+        notification.className = `notification show ${type}`;
         setTimeout(() => {
-            this.notification.classList.remove('show');
+            notification.classList.remove('show');
         }, 3000);
     }
-
-    initLocalStorageCleanup() {
-        // Clean up old entries (older than 30 days)
-        const now = new Date().getTime();
-        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-        
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('linkpic_')) {
-                try {
-                    const data = JSON.parse(localStorage.getItem(key));
-                    if (now - data.timestamp > thirtyDays) {
-                        localStorage.removeItem(key);
-                    }
-                } catch (e) {
-                    localStorage.removeItem(key);
-                }
-            }
-        }
-    }
-}
-
-// Initialize the app
-document.addEventListener('DOMContentLoaded', () => new LinkPicApp());
+});
