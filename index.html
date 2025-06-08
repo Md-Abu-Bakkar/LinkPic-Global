@@ -3,74 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkPicGlobal - Create Image Links</title>
+    <title>LinkPicGlobal - Professional Image Link Creator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Create professional image links for social media marketing with click tracking">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>LinkPicGlobal</h1>
-            <p>Create clickable image links for social media marketing</p>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <i class="fas fa-link"></i>
+                    <h1>LinkPic<span>Global</span></h1>
+                </div>
+                <p class="tagline">Transform your images into powerful marketing links</p>
+            </div>
         </header>
-        
-        <main>
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-box" id="uploadBox">
-                    <div class="image-preview-container">
-                        <img src="" alt="Upload preview" id="imagePreview" class="hidden">
-                        <div class="loading-overlay hidden" id="loadingOverlay">
-                            <div class="spinner"></div>
-                            <p>Processing image...</p>
+
+        <main class="app-main">
+            <div class="tool-container">
+                <div class="upload-card">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-box" id="uploadBox">
+                            <div class="image-preview-container">
+                                <div class="placeholder-graphic">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Drag & drop your image here</p>
+                                    <span>or click to browse</span>
+                                </div>
+                                <img src="" alt="Upload preview" id="imagePreview" class="hidden" loading="lazy">
+                                <div class="loading-overlay hidden" id="loadingOverlay">
+                                    <div class="spinner"></div>
+                                    <p>Optimizing your image...</p>
+                                </div>
+                            </div>
+                            <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                        </div>
+                        <div class="upload-meta">
+                            <div class="file-info hidden" id="fileInfo">
+                                <span id="fileName"></span>
+                                <span id="fileSize"></span>
+                            </div>
+                            <div class="quality-control">
+                                <label for="qualityRange">Image Quality:</label>
+                                <input type="range" id="qualityRange" min="50" max="100" value="85">
+                                <span id="qualityValue">85%</span>
+                            </div>
                         </div>
                     </div>
-                    <input type="file" id="imageUpload" accept="image/*" class="hidden">
-                    <label for="imageUpload" class="upload-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
-                            <line x1="16" y1="5" x2="22" y2="5"></line>
-                            <line x1="19" y1="2" x2="19" y2="8"></line>
-                            <circle cx="9" cy="9" r="2"></circle>
-                            <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-                        </svg>
-                        <span>Upload Image</span>
-                        <p class="drag-text">or drag & drop</p>
-                    </label>
+
+                    <form id="linkForm" class="link-form">
+                        <div class="form-group">
+                            <label for="destinationUrl">
+                                <i class="fas fa-external-link-alt"></i> Destination URL
+                            </label>
+                            <input type="url" id="destinationUrl" placeholder="https://yourwebsite.com/offer" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="imageCaption">
+                                <i class="fas fa-comment-alt"></i> Caption (Optional)
+                            </label>
+                            <textarea id="imageCaption" placeholder="Describe your image for better engagement"></textarea>
+                            <div class="char-count"><span id="charCount">0</span>/200</div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="reset" class="btn secondary" id="resetBtn">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                            <button type="submit" class="btn primary" id="generateBtn">
+                                <i class="fas fa-magic"></i> Generate Link
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </div>
-            
-            <form id="linkForm">
-                <div class="form-group">
-                    <label for="destinationUrl">Destination URL</label>
-                    <input type="url" id="destinationUrl" placeholder="https://example.com" required>
+
+                <div class="result-card hidden" id="resultCard">
+                    <div class="result-header">
+                        <i class="fas fa-check-circle success-icon"></i>
+                        <h3>Your Image Link is Ready!</h3>
+                    </div>
+                    
+                    <div class="link-preview">
+                        <div class="preview-image">
+                            <img id="resultPreview" src="" alt="Result preview">
+                        </div>
+                        <div class="preview-meta">
+                            <div class="preview-url">
+                                <input type="text" id="generatedLink" readonly>
+                                <button id="copyBtn" class="btn copy-btn" data-tooltip="Copy to clipboard">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="preview-actions">
+                                <a href="#" id="testLink" class="btn test-btn" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> Test Link
+                                </a>
+                                <button id="shareBtn" class="btn share-btn">
+                                    <i class="fas fa-share-alt"></i> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-chart-line"></i>
+                            <div>
+                                <span class="stat-value">0</span>
+                                <span class="stat-label">Clicks</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-eye"></i>
+                            <div>
+                                <span class="stat-value">0</span>
+                                <span class="stat-label">Views</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <div>
+                                <span class="stat-value" id="createdDate"></span>
+                                <span class="stat-label">Created</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="imageCaption">Caption (Optional)</label>
-                    <textarea id="imageCaption" placeholder="Enter a description for your image"></textarea>
-                </div>
-                
-                <button type="submit" class="generate-btn" id="generateBtn">Generate Link</button>
-            </form>
-            
-            <div class="result-area hidden" id="resultArea">
-                <h3>Your LinkPic is Ready!</h3>
-                <div class="link-container">
-                    <input type="text" id="generatedLink" readonly>
-                    <button id="copyBtn">Copy</button>
-                </div>
-                <div class="test-link">
-                    <a href="#" id="testLink" target="_blank">Test Your Link</a>
-                </div>
-                <p class="instructions">Share this link on social media. When clicked, it will show your image with a link to your destination URL.</p>
             </div>
         </main>
-        
-        <footer>
-            <p>LinkPicGlobal - A simple tool to create image links for marketing</p>
+
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="#">Terms</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Help</a>
+                </div>
+                <p class="copyright">© 2023 LinkPicGlobal. All rights reserved.</p>
+            </div>
         </footer>
     </div>
-    
+
+    <div class="notification" id="notification"></div>
+
     <script src="script.js"></script>
 </body>
 </html>
