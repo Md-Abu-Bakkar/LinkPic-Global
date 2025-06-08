@@ -1,91 +1,84 @@
-class RedirectPage {
-    constructor() {
-        this.initElements();
-        this.loadImageData();
-    }
-
-    initElements() {
-        this.displayImage = document.getElementById('displayImage');
-        this.captionElement = document.getElementById('imageCaption');
-        this.destinationLink = document.getElementById('destinationLink');
-        this.imageLoading = document.getElementById('imageLoading');
-        this.imageError = document.getElementById('imageError');
-    }
-
-    loadImageData() {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkPicGlobal - View Image</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Adsterra Ads -->
+    <script type='text/javascript' src='//pl26865068.profitableratecpm.com/28/5a/9d/285a9daf669638cc241d55b11a9022a8.js'></script>
+    <script type='text/javascript' src='//pl26865081.profitableratecpm.com/3f/7c/da/3f7cdae06fb7910f8f7c01f3378a4291.js'></script>
+</head>
+<body>
+    <div class="redirect-container">
+        <div class="ad-container top-ad">
+            <!-- Ad will be loaded here -->
+        </div>
+        
+        <div class="image-viewer">
+            <div class="image-container">
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="spinner"></div>
+                    <p>Loading image...</p>
+                </div>
+                <img id="displayImage" alt="Linked Image" class="hidden">
+            </div>
+            <div id="imageCaption" class="caption"></div>
+            <a href="#" id="destinationLink" class="destination-btn">Go to Original URL</a>
+        </div>
+        
+        <div class="ad-container bottom-ad">
+            <!-- Ad will be loaded here -->
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const linkId = urlParams.get('id');
-        
-        if (!linkId) {
-            this.showError('Invalid link - missing ID');
-            return;
-        }
-        
-        const linkData = JSON.parse(localStorage.getItem(`linkpic_${linkId}`));
-        
-        if (!linkData) {
-            this.showError('Link not found or expired');
-            return;
-        }
-        
-        // Update stats (count this as a view)
-        linkData.stats.views = (linkData.stats.views || 0) + 1;
-        localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
-        
-        // Display the content
-        this.displayCaption(linkData.caption);
-        this.setupDestinationLink(linkData.url, linkId);
-        this.loadImage(linkData.image);
-    }
+        const displayImage = document.getElementById('displayImage');
+        const captionElement = document.getElementById('imageCaption');
+        const destinationLink = document.getElementById('destinationLink');
+        const loadingOverlay = document.getElementById('loadingOverlay');
 
-    loadImage(imageData) {
-        this.displayImage.onload = () => {
-            this.imageLoading.classList.add('hidden');
-            this.displayImage.classList.remove('hidden');
-        };
-        
-        this.displayImage.onerror = () => {
-            this.imageLoading.classList.add('hidden');
-            this.showError('Failed to load image');
-        };
-        
-        this.displayImage.src = imageData;
-    }
-
-    displayCaption(caption) {
-        if (caption && caption.trim() !== '') {
-            this.captionElement.textContent = caption;
-            this.captionElement.classList.remove('hidden');
-        }
-    }
-
-    setupDestinationLink(url, linkId) {
-        if (url) {
-            this.destinationLink.href = url;
+        if (linkId) {
+            // Retrieve data from localStorage
+            const linkData = JSON.parse(localStorage.getItem(`linkpic_${linkId}`));
             
-            // Track click event
-            this.destinationLink.addEventListener('click', (e) => {
-                e.preventDefault();
+            if (linkData) {
+                // Display the image
+                displayImage.onload = function() {
+                    loadingOverlay.classList.add('hidden');
+                    displayImage.classList.remove('hidden');
+                };
                 
-                // Update click stats
-                const linkData = JSON.parse(localStorage.getItem(`linkpic_${linkId}`));
-                linkData.stats.clicks = (linkData.stats.clicks || 0) + 1;
-                localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
+                displayImage.onerror = function() {
+                    loadingOverlay.textContent = 'Failed to load image';
+                };
                 
-                // Open destination in new tab
-                window.open(url, '_blank');
-            });
+                displayImage.src = linkData.image;
+                
+                // Set caption if available
+                if (linkData.caption) {
+                    captionElement.textContent = linkData.caption;
+                } else {
+                    captionElement.classList.add('hidden');
+                }
+                
+                // Set destination URL
+                if (linkData.url) {
+                    destinationLink.href = linkData.url;
+                } else {
+                    destinationLink.classList.add('hidden');
+                }
+            } else {
+                loadingOverlay.textContent = 'Link not found or expired';
+            }
         } else {
-            this.destinationLink.classList.add('hidden');
+            loadingOverlay.textContent = 'Invalid link - missing ID';
         }
-    }
-
-    showError(message) {
-        this.imageLoading.classList.add('hidden');
-        this.imageError.querySelector('p').textContent = message;
-        this.imageError.classList.remove('hidden');
-    }
-}
-
-// Initialize the redirect page
-document.addEventListener('DOMContentLoaded', () => new RedirectPage());
+    });
+    </script>
+</body>
+</html>
