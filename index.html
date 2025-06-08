@@ -3,152 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkPicGlobal - Professional Image Link Creator</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>LinkPicGlobal - Premium Image Links</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <meta name="description" content="Create professional image links for social media marketing with click tracking">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="app-header">
-            <div class="header-content">
-                <div class="logo-container">
-                    <i class="fas fa-link"></i>
-                    <h1>LinkPic<span>Global</span></h1>
-                </div>
-                <p class="tagline">Transform your images into powerful marketing links</p>
+    <div class="glass-container">
+        <header class="animate__animated animate__fadeInDown">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm0 16H5V8h14v10zm-5-9h-4v4h4v-4z"/>
+                </svg>
+                <h1>LinkPic<span>Global</span></h1>
             </div>
+            <p class="tagline">Transform images into powerful marketing links</p>
         </header>
-
-        <main class="app-main">
-            <div class="tool-container">
-                <div class="upload-card">
-                    <div class="upload-area" id="uploadArea">
-                        <div class="upload-box" id="uploadBox">
-                            <div class="image-preview-container">
-                                <div class="placeholder-graphic">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Drag & drop your image here</p>
-                                    <span>or click to browse</span>
-                                </div>
-                                <img src="" alt="Upload preview" id="imagePreview" class="hidden" loading="lazy">
+        
+        <main>
+            <div class="upload-card animate__animated animate__fadeIn">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-box" id="uploadBox">
+                        <div class="image-preview-container">
+                            <div class="aspect-ratio-keeper">
+                                <img src="" alt="Upload preview" id="imagePreview" class="hidden">
                                 <div class="loading-overlay hidden" id="loadingOverlay">
                                     <div class="spinner"></div>
                                     <p>Optimizing your image...</p>
                                 </div>
                             </div>
-                            <input type="file" id="imageUpload" accept="image/*" class="hidden">
                         </div>
-                        <div class="upload-meta">
-                            <div class="file-info hidden" id="fileInfo">
-                                <span id="fileName"></span>
-                                <span id="fileSize"></span>
+                        <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                        <label for="imageUpload" class="upload-label">
+                            <div class="upload-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 13a1 1 0 0 0-1 1v.38l-1.48-1.48a2.79 2.79 0 0 0-3.93 0l-.7.7-2.48-2.48a2.85 2.85 0 0 0-3.93 0L4 12.6V7a1 1 0 0 1 1-1h7a1 1 0 0 0 0-2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a1 1 0 0 0-1-1zM5 20a1 1 0 0 1-1-1v-3.57l2.9-2.9a.79.79 0 0 1 1.09 0l3.17 3.17 4.29 4.3zm13-1a.9.9 0 0 1-.18.53L13.31 15l.7-.7a.77.77 0 0 1 1.1 0L18 17.22zm4.71-8.71L20 8a1 1 0 0 0-1-1h-2a1 1 0 0 0 0 2h1l-1.3 1.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3-3A1 1 0 0 0 22.71 10.29z"/>
+                                </svg>
                             </div>
-                            <div class="quality-control">
-                                <label for="qualityRange">Image Quality:</label>
-                                <input type="range" id="qualityRange" min="50" max="100" value="85">
-                                <span id="qualityValue">85%</span>
-                            </div>
-                        </div>
+                            <h3>Upload Your Image</h3>
+                            <p class="drag-text">Drag & drop or click to browse</p>
+                            <p class="formats">Supports: JPG, PNG, WEBP (Max 10MB)</p>
+                        </label>
                     </div>
-
-                    <form id="linkForm" class="link-form">
-                        <div class="form-group">
-                            <label for="destinationUrl">
-                                <i class="fas fa-external-link-alt"></i> Destination URL
-                            </label>
-                            <input type="url" id="destinationUrl" placeholder="https://yourwebsite.com/offer" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="imageCaption">
-                                <i class="fas fa-comment-alt"></i> Caption (Optional)
-                            </label>
-                            <textarea id="imageCaption" placeholder="Describe your image for better engagement"></textarea>
-                            <div class="char-count"><span id="charCount">0</span>/200</div>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="reset" class="btn secondary" id="resetBtn">
-                                <i class="fas fa-redo"></i> Reset
-                            </button>
-                            <button type="submit" class="btn primary" id="generateBtn">
-                                <i class="fas fa-magic"></i> Generate Link
-                            </button>
-                        </div>
-                    </form>
                 </div>
-
-                <div class="result-card hidden" id="resultCard">
-                    <div class="result-header">
-                        <i class="fas fa-check-circle success-icon"></i>
-                        <h3>Your Image Link is Ready!</h3>
+                
+                <form id="linkForm" class="animate__animated animate__fadeIn animate__delay-1s">
+                    <div class="form-group floating">
+                        <input type="url" id="destinationUrl" placeholder=" " required>
+                        <label for="destinationUrl">Destination URL</label>
+                        <div class="underline"></div>
                     </div>
                     
-                    <div class="link-preview">
-                        <div class="preview-image">
-                            <img id="resultPreview" src="" alt="Result preview">
-                        </div>
-                        <div class="preview-meta">
-                            <div class="preview-url">
-                                <input type="text" id="generatedLink" readonly>
-                                <button id="copyBtn" class="btn copy-btn" data-tooltip="Copy to clipboard">
-                                    <i class="far fa-copy"></i>
-                                </button>
-                            </div>
-                            <div class="preview-actions">
-                                <a href="#" id="testLink" class="btn test-btn" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> Test Link
-                                </a>
-                                <button id="shareBtn" class="btn share-btn">
-                                    <i class="fas fa-share-alt"></i> Share
-                                </button>
-                            </div>
-                        </div>
+                    <div class="form-group floating">
+                        <textarea id="imageCaption" placeholder=" "></textarea>
+                        <label for="imageCaption">Image Caption (Optional)</label>
+                        <div class="underline"></div>
                     </div>
                     
-                    <div class="result-stats">
-                        <div class="stat-item">
-                            <i class="fas fa-chart-line"></i>
-                            <div>
-                                <span class="stat-value">0</span>
-                                <span class="stat-label">Clicks</span>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-eye"></i>
-                            <div>
-                                <span class="stat-value">0</span>
-                                <span class="stat-label">Views</span>
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-calendar-alt"></i>
-                            <div>
-                                <span class="stat-value" id="createdDate"></span>
-                                <span class="stat-label">Created</span>
-                            </div>
-                        </div>
-                    </div>
+                    <button type="submit" class="generate-btn" id="generateBtn">
+                        <span>Generate Premium Link</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.92 6.62a1 1 0 0 0-.54-.54A1 1 0 0 0 17 6H7a1 1 0 0 0 0 2h7.59l-8.3 8.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L16 9.41V17a1 1 0 0 0 2 0V7a1 1 0 0 0-.08-.38z"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="result-card hidden animate__animated animate__fadeIn" id="resultArea">
+                <div class="success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18 7.05a1 1 0 0 0-1.41 0l-7.45 7.46-3.13-3.14A1 1 0 1 0 4.93 13l3.84 3.84a1 1 0 0 0 1.42 0l8.16-8.16a1 1 0 0 0 0-1.42z"/>
+                    </svg>
+                </div>
+                <h2>Your Premium Link is Ready!</h2>
+                <p class="result-description">Share this beautiful image link anywhere:</p>
+                
+                <div class="link-container">
+                    <input type="text" id="generatedLink" readonly>
+                    <button id="copyBtn">
+                        <span class="default-text">Copy</span>
+                        <span class="success-text">Copied!</span>
+                    </button>
+                </div>
+                
+                <div class="preview-section">
+                    <p>Preview:</p>
+                    <a href="#" id="testLink" target="_blank" class="preview-button">
+                        <span>View How It Looks</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21.92 11.6a1 1 0 0 0-.21-.33l-4-4a1 1 0 1 0-1.42 1.42l2.3 2.29H7a1 1 0 0 0 0 2h11.59l-2.3 2.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l4-4a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76z"/>
+                        </svg>
+                    </a>
+                </div>
+                
+                <div class="share-buttons">
+                    <button class="share-btn facebook">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.12 5.32H17V2.14A26.11 26.11 0 0 0 14.26 2c-2.72 0-4.58 1.66-4.58 4.7v2.62H6.61v3.56h3.07V22h3.68v-9.12h3.06l.46-3.56h-3.52V7.05c0-1.05.28-1.73 1.76-1.73z"/>
+                        </svg>
+                        Facebook
+                    </button>
+                    <button class="share-btn twitter">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22 5.8a8.49 8.49 0 0 1-2.36.64 4.13 4.13 0 0 0 1.81-2.27 8.21 8.21 0 0 1-2.61 1 4.1 4.1 0 0 0-7 3.74 11.64 11.64 0 0 1-8.45-4.29 4.16 4.16 0 0 0-.55 2.07 4.09 4.09 0 0 0 1.82 3.41 4.05 4.05 0 0 1-1.86-.51v.05a4.1 4.1 0 0 0 3.3 4 3.93 3.93 0 0 1-1.1.17 4.9 4.9 0 0 1-.77-.07 4.11 4.11 0 0 0 3.83 2.84A8.22 8.22 0 0 1 3 18.34a7.93 7.93 0 0 1-1-.06 11.57 11.57 0 0 0 6.29 1.85A11.59 11.59 0 0 0 20 8.45v-.52a8.43 8.43 0 0 0 2-2.13z"/>
+                        </svg>
+                        Twitter
+                    </button>
                 </div>
             </div>
         </main>
-
-        <footer class="app-footer">
-            <div class="footer-content">
-                <div class="footer-links">
-                    <a href="#">Terms</a>
-                    <a href="#">Privacy</a>
-                    <a href="#">Help</a>
-                </div>
-                <p class="copyright">© 2023 LinkPicGlobal. All rights reserved.</p>
-            </div>
+        
+        <footer class="animate__animated animate__fadeInUp animate__delay-1s">
+            <p>© 2023 LinkPicGlobal | Premium Image Linking Tool</p>
         </footer>
     </div>
-
-    <div class="notification" id="notification"></div>
-
+    
     <script src="script.js"></script>
 </body>
 </html>
