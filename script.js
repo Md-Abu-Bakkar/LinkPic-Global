@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM elements
+    // DOM Elements
     const imageUpload = document.getElementById('imageUpload');
     const uploadBox = document.getElementById('uploadBox');
+    const uploadLabel = document.querySelector('.upload-label');
     const imagePreview = document.getElementById('imagePreview');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const linkForm = document.getElementById('linkForm');
@@ -9,138 +10,241 @@ document.addEventListener('DOMContentLoaded', function() {
     const generatedLink = document.getElementById('generatedLink');
     const copyBtn = document.getElementById('copyBtn');
     const testLink = document.getElementById('testLink');
-    const notification = document.getElementById('notification');
-
+    
+    // State
     let uploadedImage = null;
-
-    // Handle image upload
-    imageUpload.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            if (file.type.match('image.*')) {
-                loadingOverlay.classList.remove('hidden');
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Process image to ensure reasonable size
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        // Set maximum dimensions
-                        const MAX_WIDTH = 1200;
-                        const MAX_HEIGHT = 1200;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Convert to JPEG with 80% quality
-                        uploadedImage = canvas.toDataURL('image/jpeg', 0.8);
-                        imagePreview.src = uploadedImage;
-                        imagePreview.classList.remove('hidden');
-                        loadingOverlay.classList.add('hidden');
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+    
+    // Initialize
+    initUploadBox();
+    
+    function initUploadBox() {
+        // Click to upload
+        uploadBox.addEventListener('click', function(e) {
+            if (e.target === uploadBox || e.target === uploadLabel) {
+                imageUpload.click();
             }
+        });
+        
+        // Drag and drop
+        uploadBox.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+        
+        uploadBox.addEventListener('dragleave', function() {
+            uploadBox.classList.remove('dragover');
+        });
+        
+        uploadBox.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleImageUpload(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // File input change
+        imageUpload.addEventListener('change', function(e) {
+            if (e.target.files.length) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+    }
+    
+    // Handle image upload
+    function handleImageUpload(file) {
+        // Validate file
+        if (!file.type.match('image.*')) {
+            showError('Please upload an image file (JPG, PNG, WEBP)');
+            return;
         }
-    });
-
-    // Allow clicking on the upload area
-    uploadBox.addEventListener('click', function() {
-        imageUpload.click();
-    });
-
-    // Handle form submission
+        
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+            showError('Image size should be less than 10MB');
+            return;
+        }
+        
+        // Show loading state
+        loadingOverlay.classList.remove('hidden');
+        uploadLabel.classList.add('hidden');
+        
+        // Process image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            optimizeImage(e.target.result, function(optimizedImage) {
+                uploadedImage = optimizedImage;
+                displayPreviewImage(optimizedImage);
+                loadingOverlay.classList.add('hidden');
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Optimize image for web
+    function optimizeImage(imageData, callback) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions (max 1600px)
+            const MAX_DIMENSION = 1600;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height && width > MAX_DIMENSION) {
+                height *= MAX_DIMENSION / width;
+                width = MAX_DIMENSION;
+            } else if (height > MAX_DIMENSION) {
+                width *= MAX_DIMENSION / height;
+                height = MAX_DIMENSION;
+            }
+            
+            // Set canvas dimensions
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw image with new dimensions
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to WEBP (85% quality) for better compression
+            if (imageData.startsWith('data:image/png')) {
+                // PNGs with transparency
+                callback(canvas.toDataURL('image/png'));
+            } else {
+                // JPG/WEBP - use WEBP if supported
+                try {
+                    callback(canvas.toDataURL('image/webp', 0.85));
+                } catch (e) {
+                    // Fallback to JPEG if WEBP not supported
+                    callback(canvas.toDataURL('image/jpeg', 0.85));
+                }
+            }
+        };
+        img.src = imageData;
+    }
+    
+    // Display preview image
+    function displayPreviewImage(imageData) {
+        imagePreview.src = imageData;
+        imagePreview.classList.remove('hidden');
+        
+        // Fade in animation
+        imagePreview.style.opacity = 0;
+        setTimeout(() => {
+            imagePreview.style.transition = 'opacity 0.5s ease';
+            imagePreview.style.opacity = 1;
+        }, 10);
+    }
+    
+    // Form submission
     linkForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         if (!uploadedImage) {
-            showNotification('Please upload an image first', 'error');
+            showError('Please upload an image first');
             return;
         }
-
+        
         const destinationUrl = document.getElementById('destinationUrl').value;
-        if (!destinationUrl) {
-            showNotification('Please enter a destination URL', 'error');
+        if (!isValidUrl(destinationUrl)) {
+            showError('Please enter a valid URL (e.g., https://example.com)');
             return;
         }
-
+        
         const imageCaption = document.getElementById('imageCaption').value;
         
         // Generate unique ID for the link
-        const linkId = generateShortId();
+        const linkId = generateId(12);
         
-        // Create data object to store
+        // Store data in localStorage with expiration (7 days)
         const linkData = {
             image: uploadedImage,
             url: destinationUrl,
             caption: imageCaption,
-            timestamp: new Date().getTime()
+            timestamp: new Date().getTime(),
+            expires: new Date().getTime() + 7 * 24 * 60 * 60 * 1000 // 7 days
         };
-
-        // Store in localStorage
+        
         localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
         
-        // Create the short link
-        const baseUrl = window.location.href.split('?')[0].replace('index.html', '');
-        const shortLink = `${baseUrl}view.html?id=${linkId}`;
+        // Clean up old entries
+        cleanupStorage();
         
-        // Display the result
-        generatedLink.value = shortLink;
-        testLink.href = shortLink;
+        // Create the shareable link
+        const baseUrl = window.location.href.replace('index.html', '');
+        const link = `${baseUrl}redirect.html?id=${linkId}`;
+        
+        // Display result
+        generatedLink.value = link;
+        testLink.href = link;
         resultArea.classList.remove('hidden');
         
-        // Show success message
-        showNotification('Link generated successfully!', 'success');
+        // Scroll to result with animation
+        setTimeout(() => {
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     });
-
+    
     // Copy link to clipboard
     copyBtn.addEventListener('click', function() {
         generatedLink.select();
         document.execCommand('copy');
         
         // Visual feedback
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = 'Copied!';
         copyBtn.classList.add('copied');
         
-        showNotification('Link copied to clipboard', 'success');
-        
-        setTimeout(function() {
-            copyBtn.textContent = originalText;
+        // Reset after 2 seconds
+        setTimeout(() => {
             copyBtn.classList.remove('copied');
         }, 2000);
     });
-
-    // Generate short ID (6 characters)
-    function generateShortId() {
-        return Math.random().toString(36).substring(2, 8);
+    
+    // Helper functions
+    function generateId(length) {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        
+        return result;
     }
-
-    // Show notification
-    function showNotification(message, type) {
-        notification.textContent = message;
-        notification.className = `notification show ${type}`;
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
+    
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    
+    function showError(message) {
+        alert(message); // Replace with prettier error display in production
+    }
+    
+    function cleanupStorage() {
+        const now = new Date().getTime();
+        const keysToRemove = [];
+        
+        // Find expired items
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('linkpic_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    if (data.expires && data.expires < now) {
+                        keysToRemove.push(key);
+                    }
+                } catch (e) {
+                    keysToRemove.push(key);
+                }
+            }
+        }
+        
+        // Remove expired items
+        keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 });
