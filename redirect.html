@@ -3,104 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkPicGlobal - View Image</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>LinkPicGlobal - Image Link</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <!-- Adsterra Ads -->
-    <script type='text/javascript'>
-        // Fallback ad content
-        function loadAdFallback(containerId) {
-            const container = document.getElementById(containerId);
-            if (container && container.innerHTML.trim() === '') {
-                container.innerHTML = `
-                    <div class="ad-fallback">
-                        <p>Advertisement</p>
-                        <div class="ad-placeholder">
-                            <i class="fas fa-ad"></i>
-                            <p>Ad could not be loaded</p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        // Initialize Adsterra with fallback
-        function initAdsterra() {
-            try {
-                // Top Ad
-                const topAdScript = document.createElement('script');
-                topAdScript.type = 'text/javascript';
-                topAdScript.src = '//pl26865068.profitableratecpm.com/28/5a/9d/285a9daf669638cc241d55b11a9022a8.js';
-                topAdScript.onerror = function() { loadAdFallback('topAdContainer'); };
-                document.head.appendChild(topAdScript);
-                
-                // Bottom Ad
-                const bottomAdScript = document.createElement('script');
-                bottomAdScript.type = 'text/javascript';
-                bottomAdScript.src = '//pl26865081.profitableratecpm.com/3f/7c/da/3f7cdae06fb7910f8f7c01f3378a4291.js';
-                bottomAdScript.onerror = function() { loadAdFallback('bottomAdContainer'); };
-                document.head.appendChild(bottomAdScript);
-            } catch (e) {
-                loadAdFallback('topAdContainer');
-                loadAdFallback('bottomAdContainer');
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', initAdsterra);
-    </script>
+    <script type='text/javascript' src='//pl26865068.profitableratecpm.com/28/5a/9d/285a9daf669638cc241d55b11a9022a8.js'></script>
+    <script type='text/javascript' src='//pl26865081.profitableratecpm.com/3f/7c/da/3f7cdae06fb7910f8f7c01f3378a4291.js'></script>
 </head>
 <body>
-    <div class="redirect-app">
-        <header class="redirect-header">
-            <div class="branding">
-                <i class="fas fa-link"></i>
-                <span>LinkPicGlobal</span>
-            </div>
-        </header>
-
-        <main class="redirect-main">
-            <!-- Top Ad Container -->
-            <div id="topAdContainer" class="ad-container">
-                <!-- Ad will be loaded here by script -->
-            </div>
-
-            <div class="image-viewer-container">
-                <div class="image-viewer">
-                    <div class="image-loading" id="imageLoading">
+    <div class="redirect-container">
+        <div class="ad-container top-ad">
+            <!-- Ad will be loaded here by Adsterra script -->
+        </div>
+        
+        <div class="image-viewer animate__animated animate__fadeIn">
+            <div class="image-display">
+                <div class="image-wrapper">
+                    <img id="displayImage" alt="Linked Image">
+                    <div class="loading-overlay" id="imageLoading">
                         <div class="spinner"></div>
-                        <p>Loading your image...</p>
+                        <p>Loading beautiful image...</p>
                     </div>
-                    <div class="image-error hidden" id="imageError">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Image could not be loaded</p>
-                        <a href="javascript:window.location.reload()" class="btn retry-btn">
-                            <i class="fas fa-sync-alt"></i> Try Again
-                        </a>
-                    </div>
-                    <img id="displayImage" alt="Linked Image" class="hidden" loading="eager">
                 </div>
-                
-                <div class="image-meta">
-                    <div id="imageCaption" class="caption hidden"></div>
-                    <a href="#" id="destinationLink" class="destination-btn">
-                        <i class="fas fa-external-link-alt"></i> Visit Destination
-                    </a>
-                </div>
+                <div id="imageCaption" class="caption"></div>
+                <a href="#" id="destinationLink" class="destination-btn">
+                    <span>Visit Destination</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.92 6.62a1 1 0 0 0-.54-.54A1 1 0 0 0 17 6H7a1 1 0 0 0 0 2h7.59l-8.3 8.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L16 9.41V17a1 1 0 0 0 2 0V7a1 1 0 0 0-.08-.38z"/>
+                    </svg>
+                </a>
             </div>
-
-            <!-- Bottom Ad Container -->
-            <div id="bottomAdContainer" class="ad-container">
-                <!-- Ad will be loaded here by script -->
-            </div>
-        </main>
-
-        <footer class="redirect-footer">
-            <p>Powered by LinkPicGlobal - Create your own image links today</p>
-        </footer>
+        </div>
+        
+        <div class="ad-container bottom-ad">
+            <!-- Ad will be loaded here by Adsterra script -->
+        </div>
     </div>
-
+    
     <script src="redirect.js"></script>
 </body>
 </html>
