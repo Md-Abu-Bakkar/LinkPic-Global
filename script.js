@@ -1,35 +1,98 @@
 document.addEventListener('DOMContentLoaded', function() {
     const imageUpload = document.getElementById('imageUpload');
     const uploadBox = document.getElementById('uploadBox');
+    const uploadLabel = document.querySelector('.upload-label');
     const imagePreview = document.getElementById('imagePreview');
+    const loadingOverlay = document.getElementById('loadingOverlay');
     const linkForm = document.getElementById('linkForm');
     const resultArea = document.getElementById('resultArea');
     const generatedLink = document.getElementById('generatedLink');
     const copyBtn = document.getElementById('copyBtn');
+    const testLink = document.getElementById('testLink');
     
     let uploadedImage = null;
     
-    // Handle image upload
+    // Handle image upload via file input
     imageUpload.addEventListener('change', function(e) {
-        const file = e.target.files[0];
+        handleImageUpload(e.target.files[0]);
+    });
+    
+    // Handle drag and drop
+    uploadBox.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadBox.classList.add('dragover');
+    });
+    
+    uploadBox.addEventListener('dragleave', function() {
+        uploadBox.classList.remove('dragover');
+    });
+    
+    uploadBox.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadBox.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleImageUpload(e.dataTransfer.files[0]);
+        }
+    });
+    
+    // Handle image upload processing
+    function handleImageUpload(file) {
         if (file && file.type.match('image.*')) {
+            loadingOverlay.classList.remove('hidden');
+            uploadLabel.classList.add('hidden');
+            
             const reader = new FileReader();
             
             reader.onload = function(e) {
-                uploadedImage = e.target.result;
-                imagePreview.src = uploadedImage;
-                imagePreview.classList.remove('hidden');
-                uploadBox.classList.add('hidden');
+                // Process the image to ensure reasonable size
+                processImage(e.target.result, function(processedImage) {
+                    uploadedImage = processedImage;
+                    imagePreview.src = uploadedImage;
+                    imagePreview.classList.remove('hidden');
+                    loadingOverlay.classList.add('hidden');
+                });
             };
             
             reader.readAsDataURL(file);
         }
-    });
+    }
     
-    // Allow clicking on the upload area to trigger file input
-    uploadBox.addEventListener('click', function() {
-        imageUpload.click();
-    });
+    // Process image to ensure proper dimensions
+    function processImage(imageData, callback) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set maximum dimensions
+            const MAX_WIDTH = 1200;
+            const MAX_HEIGHT = 1200;
+            
+            let width = img.width;
+            let height = img.height;
+            
+            // Calculate new dimensions maintaining aspect ratio
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to JPEG with 80% quality to reduce size
+            callback(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.src = imageData;
+    }
     
     // Handle form submission
     linkForm.addEventListener('submit', function(e) {
@@ -44,26 +107,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const imageCaption = document.getElementById('imageCaption').value;
         
         // Generate unique ID for the link
-        const linkId = generateId(6);
+        const linkId = generateId(12);
         
-        // Create the redirect page content
-        const redirectPageContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="refresh" content="0; url='redirect.html?image=${encodeURIComponent(uploadedImage)}&url=${encodeURIComponent(destinationUrl)}&caption=${encodeURIComponent(imageCaption)}'" />
-</head>
-<body>
-    Redirecting...
-</body>
-</html>
-        `;
+        // Store data in localStorage
+        const linkData = {
+            image: uploadedImage,
+            url: destinationUrl,
+            caption: imageCaption,
+            timestamp: new Date().getTime()
+        };
         
-        // In a real implementation, you would save this file to your server
-        // For GitHub Pages, we'll simulate it with URL parameters
-        const link = `${window.location.href.replace('index.html', '')}redirect.html?image=${encodeURIComponent(uploadedImage)}&url=${encodeURIComponent(destinationUrl)}&caption=${encodeURIComponent(imageCaption)}`;
+        localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
+        
+        // Create the shareable link
+        const baseUrl = window.location.href.replace('index.html', '');
+        const link = `${baseUrl}redirect.html?id=${linkId}`;
         
         generatedLink.value = link;
+        testLink.href = link;
         resultArea.classList.remove('hidden');
         
         // Scroll to result
@@ -76,11 +137,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.execCommand('copy');
         
         // Change button text temporarily
-        const originalText = copyBtn.textContent;
         copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copied');
         
         setTimeout(function() {
-            copyBtn.textContent = originalText;
+            copyBtn.textContent = 'Copy';
+            copyBtn.classList.remove('copied');
         }, 2000);
     });
     
