@@ -17,7 +17,13 @@
         <main>
             <div class="upload-area" id="uploadArea">
                 <div class="upload-box" id="uploadBox">
-                    <img src="placeholder-image.png" alt="Upload preview" id="imagePreview" class="hidden">
+                    <div class="image-preview-container">
+                        <img src="" alt="Upload preview" id="imagePreview" class="hidden">
+                        <div class="loading-overlay hidden" id="loadingOverlay">
+                            <div class="spinner"></div>
+                            <p>Processing image...</p>
+                        </div>
+                    </div>
                     <input type="file" id="imageUpload" accept="image/*" class="hidden">
                     <label for="imageUpload" class="upload-label">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -28,6 +34,7 @@
                             <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
                         </svg>
                         <span>Upload Image</span>
+                        <p class="drag-text">or drag & drop</p>
                     </label>
                 </div>
             </div>
@@ -51,6 +58,9 @@
                 <div class="link-container">
                     <input type="text" id="generatedLink" readonly>
                     <button id="copyBtn">Copy</button>
+                </div>
+                <div class="test-link">
+                    <a href="#" id="testLink" target="_blank">Test Your Link</a>
                 </div>
                 <p class="instructions">Share this link on social media. When clicked, it will show your image with a link to your destination URL.</p>
             </div>
