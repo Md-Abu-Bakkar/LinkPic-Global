@@ -16,8 +16,14 @@
             <!-- Ad will be loaded here by Adsterra script -->
         </div>
         
-        <div class="image-container">
-            <img id="displayImage" alt="Linked Image">
+        <div class="image-viewer">
+            <div class="image-container">
+                <img id="displayImage" alt="Linked Image">
+                <div class="loading-overlay" id="imageLoading">
+                    <div class="spinner"></div>
+                    <p>Loading image...</p>
+                </div>
+            </div>
             <div id="imageCaption" class="caption"></div>
             <a href="#" id="destinationLink" class="destination-btn">Go to Original URL</a>
         </div>
