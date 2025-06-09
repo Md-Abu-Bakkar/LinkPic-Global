@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM Elements
     const imageUpload = document.getElementById('imageUpload');
     const uploadBox = document.getElementById('uploadBox');
     const uploadLabel = document.querySelector('.upload-label');
@@ -11,179 +10,125 @@ document.addEventListener('DOMContentLoaded', function() {
     const copyBtn = document.getElementById('copyBtn');
     const testLink = document.getElementById('testLink');
     
-    // State
     let uploadedImage = null;
     
-    // Initialize
-    initUploadBox();
+    // Handle image upload via file input
+    imageUpload.addEventListener('change', function(e) {
+        handleImageUpload(e.target.files[0]);
+    });
     
-    function initUploadBox() {
-        // Click to upload
-        uploadBox.addEventListener('click', function(e) {
-            if (e.target === uploadBox || e.target === uploadLabel) {
-                imageUpload.click();
-            }
-        });
-        
-        // Drag and drop
-        uploadBox.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadBox.classList.add('dragover');
-        });
-        
-        uploadBox.addEventListener('dragleave', function() {
-            uploadBox.classList.remove('dragover');
-        });
-        
-        uploadBox.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadBox.classList.remove('dragover');
-            if (e.dataTransfer.files.length) {
-                handleImageUpload(e.dataTransfer.files[0]);
-            }
-        });
-        
-        // File input change
-        imageUpload.addEventListener('change', function(e) {
-            if (e.target.files.length) {
-                handleImageUpload(e.target.files[0]);
-            }
-        });
-    }
+    // Handle drag and drop
+    uploadBox.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadBox.classList.add('dragover');
+    });
     
-    // Handle image upload
+    uploadBox.addEventListener('dragleave', function() {
+        uploadBox.classList.remove('dragover');
+    });
+    
+    uploadBox.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadBox.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleImageUpload(e.dataTransfer.files[0]);
+        }
+    });
+    
+    // Handle image upload processing
     function handleImageUpload(file) {
-        // Validate file
-        if (!file.type.match('image.*')) {
-            showError('Please upload an image file (JPG, PNG, WEBP)');
-            return;
+        if (file && file.type.match('image.*')) {
+            loadingOverlay.classList.remove('hidden');
+            uploadLabel.classList.add('hidden');
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // Process the image to ensure reasonable size
+                processImage(e.target.result, function(processedImage) {
+                    uploadedImage = processedImage;
+                    imagePreview.src = uploadedImage;
+                    imagePreview.classList.remove('hidden');
+                    loadingOverlay.classList.add('hidden');
+                });
+            };
+            
+            reader.readAsDataURL(file);
         }
-        
-        if (file.size > 10 * 1024 * 1024) { // 10MB
-            showError('Image size should be less than 10MB');
-            return;
-        }
-        
-        // Show loading state
-        loadingOverlay.classList.remove('hidden');
-        uploadLabel.classList.add('hidden');
-        
-        // Process image
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            optimizeImage(e.target.result, function(optimizedImage) {
-                uploadedImage = optimizedImage;
-                displayPreviewImage(optimizedImage);
-                loadingOverlay.classList.add('hidden');
-            });
-        };
-        reader.readAsDataURL(file);
     }
     
-    // Optimize image for web
-    function optimizeImage(imageData, callback) {
+    // Process image to ensure proper dimensions
+    function processImage(imageData, callback) {
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Calculate new dimensions (max 1600px)
-            const MAX_DIMENSION = 1600;
+            // Set maximum dimensions
+            const MAX_WIDTH = 1200;
+            const MAX_HEIGHT = 1200;
+            
             let width = img.width;
             let height = img.height;
             
-            if (width > height && width > MAX_DIMENSION) {
-                height *= MAX_DIMENSION / width;
-                width = MAX_DIMENSION;
-            } else if (height > MAX_DIMENSION) {
-                width *= MAX_DIMENSION / height;
-                height = MAX_DIMENSION;
-            }
-            
-            // Set canvas dimensions
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Draw image with new dimensions
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Convert to WEBP (85% quality) for better compression
-            if (imageData.startsWith('data:image/png')) {
-                // PNGs with transparency
-                callback(canvas.toDataURL('image/png'));
+            // Calculate new dimensions maintaining aspect ratio
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
             } else {
-                // JPG/WEBP - use WEBP if supported
-                try {
-                    callback(canvas.toDataURL('image/webp', 0.85));
-                } catch (e) {
-                    // Fallback to JPEG if WEBP not supported
-                    callback(canvas.toDataURL('image/jpeg', 0.85));
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
                 }
             }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to JPEG with 80% quality to reduce size
+            callback(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.src = imageData;
     }
     
-    // Display preview image
-    function displayPreviewImage(imageData) {
-        imagePreview.src = imageData;
-        imagePreview.classList.remove('hidden');
-        
-        // Fade in animation
-        imagePreview.style.opacity = 0;
-        setTimeout(() => {
-            imagePreview.style.transition = 'opacity 0.5s ease';
-            imagePreview.style.opacity = 1;
-        }, 10);
-    }
-    
-    // Form submission
+    // Handle form submission
     linkForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         if (!uploadedImage) {
-            showError('Please upload an image first');
+            alert('Please upload an image first');
             return;
         }
         
         const destinationUrl = document.getElementById('destinationUrl').value;
-        if (!isValidUrl(destinationUrl)) {
-            showError('Please enter a valid URL (e.g., https://example.com)');
-            return;
-        }
-        
         const imageCaption = document.getElementById('imageCaption').value;
         
         // Generate unique ID for the link
         const linkId = generateId(12);
         
-        // Store data in localStorage with expiration (7 days)
+        // Store data in localStorage
         const linkData = {
             image: uploadedImage,
             url: destinationUrl,
             caption: imageCaption,
-            timestamp: new Date().getTime(),
-            expires: new Date().getTime() + 7 * 24 * 60 * 60 * 1000 // 7 days
+            timestamp: new Date().getTime()
         };
         
         localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
-        
-        // Clean up old entries
-        cleanupStorage();
         
         // Create the shareable link
         const baseUrl = window.location.href.replace('index.html', '');
         const link = `${baseUrl}redirect.html?id=${linkId}`;
         
-        // Display result
         generatedLink.value = link;
         testLink.href = link;
         resultArea.classList.remove('hidden');
         
-        // Scroll to result with animation
-        setTimeout(() => {
-            resultArea.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        // Scroll to result
+        resultArea.scrollIntoView({ behavior: 'smooth' });
     });
     
     // Copy link to clipboard
@@ -191,16 +136,17 @@ document.addEventListener('DOMContentLoaded', function() {
         generatedLink.select();
         document.execCommand('copy');
         
-        // Visual feedback
+        // Change button text temporarily
+        copyBtn.textContent = 'Copied!';
         copyBtn.classList.add('copied');
         
-        // Reset after 2 seconds
-        setTimeout(() => {
+        setTimeout(function() {
+            copyBtn.textContent = 'Copy';
             copyBtn.classList.remove('copied');
         }, 2000);
     });
     
-    // Helper functions
+    // Generate random ID
     function generateId(length) {
         const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let result = '';
@@ -210,41 +156,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         return result;
-    }
-    
-    function isValidUrl(string) {
-        try {
-            new URL(string);
-            return true;
-        } catch (_) {
-            return false;
-        }
-    }
-    
-    function showError(message) {
-        alert(message); // Replace with prettier error display in production
-    }
-    
-    function cleanupStorage() {
-        const now = new Date().getTime();
-        const keysToRemove = [];
-        
-        // Find expired items
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('linkpic_')) {
-                try {
-                    const data = JSON.parse(localStorage.getItem(key));
-                    if (data.expires && data.expires < now) {
-                        keysToRemove.push(key);
-                    }
-                } catch (e) {
-                    keysToRemove.push(key);
-                }
-            }
-        }
-        
-        // Remove expired items
-        keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 });
