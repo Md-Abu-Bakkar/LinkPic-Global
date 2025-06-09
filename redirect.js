@@ -2,22 +2,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const linkId = urlParams.get('id');
     
-    const displayImage = document.getElementById('displayImage');
-    const captionElement = document.getElementById('imageCaption');
+    const contentDisplay = document.getElementById('contentDisplay');
+    const contentLoading = document.getElementById('contentLoading');
+    const captionElement = document.getElementById('contentCaption');
     const destinationLink = document.getElementById('destinationLink');
-    const imageLoading = document.getElementById('imageLoading');
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
     
     if (linkId) {
         // Retrieve data from localStorage
         const linkData = JSON.parse(localStorage.getItem(`linkpic_${linkId}`));
         
         if (linkData) {
-            // Display the image
-            displayImage.onload = function() {
-                imageLoading.classList.add('hidden');
-            };
-            
-            displayImage.src = linkData.image;
+            // Display the content based on mode
+            if (linkData.mode === 'image' && linkData.imageUrl) {
+                displayImage(linkData.imageUrl);
+            } else if (linkData.mode === 'youtube' && linkData.youtubeId) {
+                displayYoutubeVideo(linkData.youtubeId);
+            }
             
             // Set caption if available
             if (linkData.caption) {
@@ -30,26 +31,60 @@ document.addEventListener('DOMContentLoaded', function() {
             if (linkData.url) {
                 destinationLink.href = linkData.url;
                 
-                // Add click tracking if needed
-                destinationLink.addEventListener('click', function(e) {
+                // Add click tracking
+                destinationLink.addEventListener('click', function() {
                     // You can add analytics here
                     console.log('User clicked through to:', linkData.url);
                 });
             } else {
                 destinationLink.classList.add('hidden');
             }
+            
+            // Copy URL button
+            copyUrlBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+            });
         } else {
             // Data not found
-            displayImage.src = 'placeholder-image.png';
-            captionElement.textContent = 'Link not found or expired';
-            destinationLink.classList.add('hidden');
-            imageLoading.classList.add('hidden');
+            displayError('Link not found or expired');
         }
     } else {
         // No ID provided
-        displayImage.src = 'placeholder-image.png';
-        captionElement.textContent = 'Invalid link';
+        displayError('Invalid link');
+    }
+    
+    function displayImage(imageUrl) {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = 'Shared image';
+        img.onload = function() {
+            contentLoading.classList.add('hidden');
+        };
+        
+        contentDisplay.innerHTML = '';
+        contentDisplay.appendChild(img);
+    }
+    
+    function displayYoutubeVideo(videoId) {
+        contentDisplay.innerHTML = `
+            <iframe class="youtube-embed" 
+                    src="https://www.youtube.com/embed/${videoId}?autoplay=0&showinfo=0&controls=1" 
+                    frameborder="0" 
+                    allowfullscreen></iframe>
+        `;
+        contentLoading.classList.add('hidden');
+    }
+    
+    function displayError(message) {
+        contentDisplay.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${message}</p>
+            </div>
+        `;
+        contentLoading.classList.add('hidden');
         destinationLink.classList.add('hidden');
-        imageLoading.classList.add('hidden');
+        captionElement.classList.add('hidden');
     }
 });
