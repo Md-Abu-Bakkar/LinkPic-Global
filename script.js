@@ -1,152 +1,269 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
     const imageUpload = document.getElementById('imageUpload');
     const uploadBox = document.getElementById('uploadBox');
     const uploadLabel = document.querySelector('.upload-label');
     const imagePreview = document.getElementById('imagePreview');
-    const loadingOverlay = document.getElementById('loadingOverlay');
+    const imageLoading = document.getElementById('imageLoading');
     const linkForm = document.getElementById('linkForm');
     const resultArea = document.getElementById('resultArea');
     const generatedLink = document.getElementById('generatedLink');
     const copyBtn = document.getElementById('copyBtn');
     const testLink = document.getElementById('testLink');
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const imageUploadSection = document.getElementById('imageUploadSection');
+    const youtubeSection = document.getElementById('youtubeSection');
+    const youtubeUrlInput = document.getElementById('youtubeUrl');
+    const youtubePreview = document.getElementById('youtubePreview');
     
-    let uploadedImage = null;
+    // ImgBB API Key
+    const IMGBB_API_KEY = 'ddc161b9a8fbb6f041c35e04629ccf71';
     
-    // Handle image upload via file input
-    imageUpload.addEventListener('change', function(e) {
-        handleImageUpload(e.target.files[0]);
-    });
+    // State variables
+    let currentMode = 'image';
+    let uploadedImageUrl = null;
+    let youtubeVideoId = null;
     
-    // Handle drag and drop
-    uploadBox.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        uploadBox.classList.add('dragover');
-    });
+    // Initialize the app
+    init();
     
-    uploadBox.addEventListener('dragleave', function() {
-        uploadBox.classList.remove('dragover');
-    });
-    
-    uploadBox.addEventListener('drop', function(e) {
-        e.preventDefault();
-        uploadBox.classList.remove('dragover');
-        if (e.dataTransfer.files.length) {
-            handleImageUpload(e.dataTransfer.files[0]);
-        }
-    });
-    
-    // Handle image upload processing
-    function handleImageUpload(file) {
-        if (file && file.type.match('image.*')) {
-            loadingOverlay.classList.remove('hidden');
-            uploadLabel.classList.add('hidden');
-            
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                // Process the image to ensure reasonable size
-                processImage(e.target.result, function(processedImage) {
-                    uploadedImage = processedImage;
-                    imagePreview.src = uploadedImage;
-                    imagePreview.classList.remove('hidden');
-                    loadingOverlay.classList.add('hidden');
-                });
-            };
-            
-            reader.readAsDataURL(file);
-        }
+    function init() {
+        setupEventListeners();
     }
     
-    // Process image to ensure proper dimensions
-    function processImage(imageData, callback) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Set maximum dimensions
-            const MAX_WIDTH = 1200;
-            const MAX_HEIGHT = 1200;
-            
-            let width = img.width;
-            let height = img.height;
-            
-            // Calculate new dimensions maintaining aspect ratio
-            if (width > height) {
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-            } else {
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Convert to JPEG with 80% quality to reduce size
-            callback(canvas.toDataURL('image/jpeg', 0.8));
-        };
-        img.src = imageData;
-    }
-    
-    // Handle form submission
-    linkForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+    function setupEventListeners() {
+        // Mode toggle
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                setMode(this.dataset.mode);
+            });
+        });
         
-        if (!uploadedImage) {
+        // Image upload
+        imageUpload.addEventListener('change', function(e) {
+            handleImageUpload(e.target.files[0]);
+        });
+        
+        // Drag and drop
+        uploadBox.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+        
+        uploadBox.addEventListener('dragleave', function() {
+            uploadBox.classList.remove('dragover');
+        });
+        
+        uploadBox.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleImageUpload(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // YouTube URL input
+        youtubeUrlInput.addEventListener('input', function() {
+            updateYoutubePreview(this.value);
+        });
+        
+        // Form submission
+        linkForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateLink();
+        });
+        
+        // Copy button
+        copyBtn.addEventListener('click', function() {
+            copyToClipboard(generatedLink.value);
+            showFeedback(this, 'Copied!');
+        });
+    }
+    
+    function setMode(mode) {
+        currentMode = mode;
+        
+        // Update UI
+        modeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+        
+        imageUploadSection.classList.toggle('hidden', mode !== 'image');
+        youtubeSection.classList.toggle('hidden', mode !== 'youtube');
+    }
+    
+    function handleImageUpload(file) {
+        if (!file || !file.type.match('image.*')) {
+            alert('Please select a valid image file (JPEG, PNG)');
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            alert('Image size should be less than 5MB');
+            return;
+        }
+        
+        // Show loading state
+        imageLoading.classList.remove('hidden');
+        uploadLabel.classList.add('hidden');
+        
+        // Upload to ImgBB
+        uploadToImgBB(file)
+            .then(url => {
+                uploadedImageUrl = url;
+                imagePreview.src = url;
+                imagePreview.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Upload failed:', error);
+                alert('Image upload failed. Please try again.');
+            })
+            .finally(() => {
+                imageLoading.classList.add('hidden');
+            });
+    }
+    
+    function uploadToImgBB(file) {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resolve(data.data.url);
+                } else {
+                    reject(data.error.message || 'Upload failed');
+                }
+            })
+            .catch(error => reject(error));
+        });
+    }
+    
+    function updateYoutubePreview(url) {
+        const videoId = extractYoutubeId(url);
+        
+        if (videoId) {
+            youtubeVideoId = videoId;
+            youtubePreview.innerHTML = `
+                <iframe class="youtube-embed" 
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=0&showinfo=0&controls=1" 
+                        frameborder="0" 
+                        allowfullscreen></iframe>
+            `;
+        } else {
+            youtubeVideoId = null;
+            youtubePreview.innerHTML = `
+                <div class="youtube-placeholder">
+                    <i class="fab fa-youtube"></i>
+                    <p>${url ? 'Invalid YouTube URL' : 'Enter YouTube URL to preview'}</p>
+                </div>
+            `;
+        }
+    }
+    
+    function extractYoutubeId(url) {
+        if (!url) return null;
+        
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+    
+    function generateLink() {
+        const destinationUrl = document.getElementById('destinationUrl').value;
+        const imageCaption = document.getElementById('imageCaption').value;
+        
+        if (!destinationUrl) {
+            alert('Please enter a destination URL');
+            return;
+        }
+        
+        if (currentMode === 'image' && !uploadedImageUrl) {
             alert('Please upload an image first');
             return;
         }
         
-        const destinationUrl = document.getElementById('destinationUrl').value;
-        const imageCaption = document.getElementById('imageCaption').value;
+        if (currentMode === 'youtube' && !youtubeVideoId) {
+            alert('Please enter a valid YouTube URL');
+            return;
+        }
         
         // Generate unique ID for the link
         const linkId = generateId(12);
         
+        // Create the shareable link
+        const baseUrl = window.location.href.replace('index.html', '');
+        let link = `${baseUrl}redirect.html?id=${linkId}`;
+        
         // Store data in localStorage
         const linkData = {
-            image: uploadedImage,
+            mode: currentMode,
             url: destinationUrl,
             caption: imageCaption,
             timestamp: new Date().getTime()
         };
         
+        if (currentMode === 'image') {
+            linkData.imageUrl = uploadedImageUrl;
+        } else {
+            linkData.youtubeId = youtubeVideoId;
+        }
+        
         localStorage.setItem(`linkpic_${linkId}`, JSON.stringify(linkData));
         
-        // Create the shareable link
-        const baseUrl = window.location.href.replace('index.html', '');
-        const link = `${baseUrl}redirect.html?id=${linkId}`;
-        
+        // Update UI
         generatedLink.value = link;
         testLink.href = link;
         resultArea.classList.remove('hidden');
         
         // Scroll to result
         resultArea.scrollIntoView({ behavior: 'smooth' });
-    });
+        
+        // Initialize social sharing
+        setupSocialSharing(link, imageCaption);
+    }
     
-    // Copy link to clipboard
-    copyBtn.addEventListener('click', function() {
-        generatedLink.select();
-        document.execCommand('copy');
+    function setupSocialSharing(link, text = '') {
+        const encodedLink = encodeURIComponent(link);
+        const encodedText = encodeURIComponent(text);
         
-        // Change button text temporarily
-        copyBtn.textContent = 'Copied!';
-        copyBtn.classList.add('copied');
+        document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`;
+        document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?url=${encodedLink}&text=${encodedText}`;
+        document.getElementById('shareWhatsapp').href = `https://wa.me/?text=${encodedText}%20${encodedLink}`;
+        document.getElementById('shareLinkedin').href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLink}`;
+    }
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('Copied to clipboard');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        });
+    }
+    
+    function showFeedback(element, message) {
+        const originalText = element.innerHTML;
+        element.innerHTML = `<i class="fas fa-check"></i> ${message}`;
         
-        setTimeout(function() {
-            copyBtn.textContent = 'Copy';
-            copyBtn.classList.remove('copied');
+        setTimeout(() => {
+            element.innerHTML = originalText;
         }, 2000);
-    });
+    }
     
-    // Generate random ID
     function generateId(length) {
         const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let result = '';
