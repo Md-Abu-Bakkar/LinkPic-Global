@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkPicGlobal - Image Link</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Adsterra Ads -->
     <script type='text/javascript' src='//pl26865068.profitableratecpm.com/28/5a/9d/285a9daf669638cc241d55b11a9022a8.js'></script>
     <script type='text/javascript' src='//pl26865081.profitableratecpm.com/3f/7c/da/3f7cdae06fb7910f8f7c01f3378a4291.js'></script>
@@ -17,23 +16,16 @@
             <!-- Ad will be loaded here by Adsterra script -->
         </div>
         
-        <div class="image-viewer animate__animated animate__fadeIn">
-            <div class="image-display">
-                <div class="image-wrapper">
-                    <img id="displayImage" alt="Linked Image">
-                    <div class="loading-overlay" id="imageLoading">
-                        <div class="spinner"></div>
-                        <p>Loading beautiful image...</p>
-                    </div>
+        <div class="image-viewer">
+            <div class="image-container">
+                <img id="displayImage" alt="Linked Image">
+                <div class="loading-overlay" id="imageLoading">
+                    <div class="spinner"></div>
+                    <p>Loading image...</p>
                 </div>
-                <div id="imageCaption" class="caption"></div>
-                <a href="#" id="destinationLink" class="destination-btn">
-                    <span>Visit Destination</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.92 6.62a1 1 0 0 0-.54-.54A1 1 0 0 0 17 6H7a1 1 0 0 0 0 2h7.59l-8.3 8.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L16 9.41V17a1 1 0 0 0 2 0V7a1 1 0 0 0-.08-.38z"/>
-                    </svg>
-                </a>
             </div>
+            <div id="imageCaption" class="caption"></div>
+            <a href="#" id="destinationLink" class="destination-btn">Go to Original URL</a>
         </div>
         
         <div class="ad-container bottom-ad">
